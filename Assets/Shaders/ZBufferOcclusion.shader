@@ -5,6 +5,7 @@ Shader "Lightship/ZBufferOcclusion"
         // Retrievable properties
         _Depth ("DepthTexture", 2D) = "black" {}
         _ColorMask ("Color Mask", Float) = 0
+        _MarbleDepthAvailable ("Depth Available", Float) = 1
     }
     SubShader
     {
@@ -69,6 +70,7 @@ Shader "Lightship/ZBufferOcclusion"
 
             float _UnityCameraForwardScale;
             float _StabilizationThreshold;
+            float _MarbleDepthAvailable;
 
             float4 _DepthTextureParams;
 
@@ -153,6 +155,8 @@ Shader "Lightship/ZBufferOcclusion"
 
             fragOutput frag(v2f i)
             {
+              // Do not sample stale frame/fused depth or write color/depth on a missing frame.
+              clip(_MarbleDepthAvailable - 0.5f);
               fragOutput o;
 
               // Infer the far plane distance

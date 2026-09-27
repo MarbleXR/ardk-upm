@@ -177,10 +177,24 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             if (OcclusionSubsystem.subsystemDescriptor?.environmentDepthImageSupported == Supported.Supported &&
                 OcclusionSubsystem.TryGetEnvironmentDepth(out var environmentDepthDescriptor))
             {
+                // TryGet may succeed while the native provider has no usable depth this frame.
+                if (!environmentDepthDescriptor.valid || environmentDepthDescriptor.nativeTexture == System.IntPtr.Zero)
+                {
+                    return null;
+                }
+#if ARF_6_1_OR_NEWER
+                if (environmentDepthDescriptor.textureType != XRTextureType.Texture2D)
+#else
+                if (environmentDepthDescriptor.dimension != UnityEngine.Rendering.TextureDimension.Tex2D)
+#endif
+                {
+                    return null;
+                }
+
                 return LightshipExternalTexture.CreateOrUpdate(ref _platformDepthTextureInfo,
                     environmentDepthDescriptor)
-                    ? null
-                    : _platformDepthTextureInfo.Texture as Texture2D;
+                    ? _platformDepthTextureInfo.Texture as Texture2D
+                    : null;
             }
 
             return null;

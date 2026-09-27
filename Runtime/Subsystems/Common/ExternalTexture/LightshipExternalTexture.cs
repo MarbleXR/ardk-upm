@@ -68,6 +68,12 @@ namespace Niantic.Lightship.AR
         /// <returns>True if the texture was created or updated successfully, false otherwise.</returns>
         public bool Update(XRTextureDescriptor descriptor)
         {
+            // A missing frame is not a type change. Retain the last valid wrapper for recovery.
+            if (!HasTexture(descriptor))
+            {
+                return false;
+            }
+
             // Check if the descriptor is valid and matches the expected texture type
 #if ARF_6_1_OR_NEWER
             if (descriptor.textureType != Descriptor.textureType)
@@ -78,13 +84,6 @@ namespace Niantic.Lightship.AR
                 throw new ArgumentException(
                     $"Invalid texture type {descriptor.dimension}. Expected {Descriptor.dimension}.");
 #endif
-
-            // Check if the descriptor is valid
-            if (!descriptor.valid)
-            {
-                Debug.LogWarning($"Invalid texture descriptor: {descriptor}");
-                return false;
-            }
 
             // Check if the descriptor has changed
             if (descriptor.Equals(Descriptor))
