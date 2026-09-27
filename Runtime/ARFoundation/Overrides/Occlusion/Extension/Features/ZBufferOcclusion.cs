@@ -21,6 +21,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
         // Helpers
         private float _cameraForwardScale;
         private bool _silenceDepthTextureWarning;
+        private static readonly int DepthAvailableId = Shader.PropertyToID("_MarbleDepthAvailable");
 
         protected override void OnMaterialAttach(Material mat)
         {
@@ -39,6 +40,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             // Set material to defaults
             mat.SetTexture(ShaderProperties.DepthTextureId, _defaultDepthTexture);
             mat.SetMatrix(ShaderProperties.DepthTransformId, Matrix4x4.identity);
+            mat.SetFloat(DepthAvailableId, 0.0f);
         }
 
         protected override void OnUpdate(Camera camera)
@@ -61,6 +63,10 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             // Do nothing if the depth texture is not available
             if (depthTexture == null)
             {
+                // Unbind stale external resources and skip this frame's depth writes, including stabilization.
+                mat.SetTexture(ShaderProperties.DepthTextureId, _defaultDepthTexture);
+                mat.SetMatrix(ShaderProperties.DepthTransformId, Matrix4x4.identity);
+                mat.SetFloat(DepthAvailableId, 0.0f);
                 if (!_silenceDepthTextureWarning)
                 {
                     Log.Info("ZBufferOcclusion: No depth texture available.");
@@ -74,6 +80,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             mat.SetTexture(ShaderProperties.DepthTextureId, depthTexture);
             mat.SetMatrix(ShaderProperties.DepthTransformId, DepthTransform);
             mat.SetFloat(ShaderProperties.CameraForwardScaleId, _cameraForwardScale);
+            mat.SetFloat(DepthAvailableId, 1.0f);
         }
 
         protected override void OnReleaseResources()
